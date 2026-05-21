@@ -57,7 +57,7 @@
             font-size: 14px;
             opacity: 0.8;
         }
-        input, select {
+        input {
             width: 100%;
             padding: 12px;
             border-radius: 10px;
@@ -67,7 +67,7 @@
             font-size: 16px;
             font-family: monospace;
         }
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             background: rgba(255,255,255,0.25);
         }
@@ -85,14 +85,13 @@
         }
         button:hover {
             background: #00cc66;
-            transform: translateY(-2px);
         }
         .results {
             margin-top: 20px;
         }
         .result-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -108,7 +107,7 @@
             margin-bottom: 5px;
         }
         .result-value {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             font-family: monospace;
             word-break: break-all;
@@ -133,20 +132,6 @@
             background: #00ff88;
             color: #1e1e1e;
         }
-        .ip-range {
-            font-family: monospace;
-            font-size: 14px;
-        }
-        .binary {
-            font-family: monospace;
-            font-size: 11px;
-            opacity: 0.6;
-            word-break: break-all;
-        }
-        hr {
-            border-color: rgba(255,255,255,0.1);
-            margin: 15px 0;
-        }
         .quick-preset {
             display: flex;
             gap: 10px;
@@ -164,13 +149,14 @@
         .preset-btn:hover {
             background: rgba(255,255,255,0.2);
         }
-        @media (max-width: 600px) {
-            .input-group {
-                flex-direction: column;
-            }
-            .result-value {
-                font-size: 14px;
-            }
+        hr {
+            border-color: rgba(255,255,255,0.1);
+            margin: 15px 0;
+        }
+        .binary {
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -178,7 +164,7 @@
 <div class="container">
     <div class="header">
         <h1>🧮 Subnet Calculator</h1>
-        <p>Tính toán địa chỉ mạng, broadcast, dải IP, số host và hơn thế nữa</p>
+        <p>Tính toán địa chỉ mạng, broadcast, dải IP, số host</p>
     </div>
 
     <div class="card">
@@ -197,8 +183,8 @@
                 <input type="text" id="ipAddress" placeholder="VD: 192.168.1.1" value="192.168.1.1">
             </div>
             <div class="input-field">
-                <label>🔢 Subnet Mask hoặc CIDR</label>
-                <input type="text" id="subnetMask" placeholder="VD: 24 hoặc 255.255.255.0" value="24">
+                <label>🔢 Subnet Mask (VD: 24 hoặc 255.255.255.0)</label>
+                <input type="text" id="subnetMask" placeholder="VD: 24" value="24">
             </div>
         </div>
 
@@ -217,200 +203,193 @@
 
         <button id="calculateBtn">📊 TÍNH TOÁN</button>
 
-        <div id="results" class="results" style="display: none;">
-            <hr>
-            <div class="result-grid">
-                <div class="result-item">
-                    <div class="result-label">🌐 Địa chỉ mạng (Network)</div>
-                    <div class="result-value" id="networkAddr"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">📢 Địa chỉ broadcast</div>
-                    <div class="result-value" id="broadcastAddr"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">🎯 IP đầu tiên (First usable)</div>
-                    <div class="result-value" id="firstUsable"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">🏁 IP cuối cùng (Last usable)</div>
-                    <div class="result-value" id="lastUsable"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">🔢 Subnet Mask (dạng số)</div>
-                    <div class="result-value" id="maskDecimal"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">📏 CIDR Notation</div>
-                    <div class="result-value" id="cidrValue"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">💻 Tổng số địa chỉ</div>
-                    <div class="result-value" id="totalHosts"></div>
-                </div>
-                <div class="result-item">
-                    <div class="result-label">✅ Số host khả dụng</div>
-                    <div class="result-value" id="usableHosts"></div>
-                </div>
-            </div>
-
-            <div class="result-item">
-                <div class="result-label">📋 Dải IP khả dụng (Range)</div>
-                <div class="result-value ip-range" id="ipRange"></div>
-            </div>
-
-            <div class="result-item">
-                <div class="result-label">💻 Binary - IP</div>
-                <div class="binary" id="binaryIp"></div>
-            </div>
-            <div class="result-item">
-                <div class="result-label">💻 Binary - Subnet Mask</div>
-                <div class="binary" id="binaryMask"></div>
-            </div>
-            <div class="result-item">
-                <div class="result-label">💻 Binary - Wildcard Mask</div>
-                <div class="binary" id="binaryWildcard"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="result-label">📖 Hướng dẫn</div>
-        <div style="font-size: 13px; opacity: 0.7; margin-top: 10px;">
-            • Nhập IP và subnet mask (VD: 255.255.255.0) hoặc CIDR (VD: 24)<br>
-            • Click vào CIDR badge để chọn nhanh<br>
-            • Click vào mẫu nhanh để test<br>
-            • Kết quả hiển thị network, broadcast, dải IP, số host, binary...
-        </div>
+        <div id="results" style="margin-top: 20px;"></div>
     </div>
 </div>
 
 <script>
+    // Hàm chuyển IP sang số nguyên 32 bit (đã sửa đúng thứ tự)
     function ipToInt(ip) {
-        return ip.split('.').reduce((int, octet) => (int << 8) + parseInt(octet, 10), 0) >>> 0;
+        var parts = ip.split('.');
+        // (a<<24) | (b<<16) | (c<<8) | d
+        return ((parseInt(parts[0]) << 24) | 
+                (parseInt(parts[1]) << 16) | 
+                (parseInt(parts[2]) << 8) | 
+                parseInt(parts[3])) >>> 0;
     }
 
-    function intToIp(int) {
-        return [
-            (int >>> 24) & 255,
-            (int >>> 16) & 255,
-            (int >>> 8) & 255,
-            int & 255
-        ].join('.');
+    // Hàm chuyển số nguyên sang IP
+    function intToIp(num) {
+        return ((num >>> 24) & 255) + '.' +
+               ((num >>> 16) & 255) + '.' +
+               ((num >>> 8) & 255) + '.' +
+               (num & 255);
     }
 
-    function parseMask(mask) {
-        if (mask.includes('.')) {
-            return ipToInt(mask);
-        } else {
-            let cidr = parseInt(mask);
-            return (~0 >>> (32 - cidr)) >>> 0;
+    // Hàm tạo mặt nạ từ CIDR
+    function cidrToMask(cidr) {
+        if (cidr === 0) return 0;
+        return (0xFFFFFFFF << (32 - cidr)) >>> 0;
+    }
+
+    // Hàm tính CIDR từ mặt nạ
+    function maskToCidr(mask) {
+        var cidr = 0;
+        for (var i = 0; i < 32; i++) {
+            if ((mask & (1 << (31 - i))) !== 0) {
+                cidr++;
+            }
         }
+        return cidr;
     }
 
-    function getCidr(maskInt) {
-        return 32 - Math.clz32(~maskInt >>> 0);
+    // Kiểm tra IP hợp lệ
+    function isValidIp(ip) {
+        var parts = ip.split('.');
+        if (parts.length !== 4) return false;
+        for (var i = 0; i < 4; i++) {
+            var num = parseInt(parts[i]);
+            if (isNaN(num) || num < 0 || num > 255) return false;
+        }
+        return true;
     }
 
-    function toBinary(ip) {
-        return ip.split('.').map(octet => 
-            parseInt(octet).toString(2).padStart(8, '0')
-        ).join('.');
+    // Kiểm tra mặt nạ hợp lệ
+    function isValidMask(mask) {
+        // Mặt nạ phải có dạng bit 1 liên tiếp từ trái sang
+        var binary = mask.toString(2);
+        var firstZero = binary.indexOf('0');
+        if (firstZero === -1) return true;
+        return binary.indexOf('1', firstZero) === -1;
     }
 
-    function validateIP(ip) {
-        const regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-        if (!regex.test(ip)) return false;
-        return ip.split('.').every(octet => {
-            let num = parseInt(octet);
-            return num >= 0 && num <= 255;
-        });
+    // Định dạng số nhị phân 8 bit
+    function toBinary8(num) {
+        var binary = (num & 255).toString(2);
+        while (binary.length < 8) binary = '0' + binary;
+        return binary;
+    }
+
+    function toBinaryIp(ip) {
+        var parts = ip.split('.');
+        return toBinary8(parseInt(parts[0])) + '.' + 
+               toBinary8(parseInt(parts[1])) + '.' + 
+               toBinary8(parseInt(parts[2])) + '.' + 
+               toBinary8(parseInt(parts[3]));
     }
 
     function calculate() {
-        let ip = document.getElementById('ipAddress').value.trim();
-        let maskInput = document.getElementById('subnetMask').value.trim();
+        var ip = document.getElementById('ipAddress').value.trim();
+        var maskInput = document.getElementById('subnetMask').value.trim();
+        var resultsDiv = document.getElementById('results');
 
-        if (!validateIP(ip)) {
-            alert('❌ Địa chỉ IP không hợp lệ! VD: 192.168.1.1');
+        // Validate IP
+        if (!isValidIp(ip)) {
+            resultsDiv.innerHTML = '<div style="background:rgba(255,0,0,0.2); padding:15px; border-radius:10px;">❌ IP không hợp lệ! (VD: 192.168.1.1)</div>';
             return;
         }
 
-        let maskInt;
-        try {
-            maskInt = parseMask(maskInput);
-        } catch(e) {
-            alert('❌ Subnet mask không hợp lệ!');
-            return;
-        }
-
-        let ipInt = ipToInt(ip);
-        let networkInt = ipInt & maskInt;
-        let broadcastInt = networkInt | (~maskInt >>> 0);
-        let cidr = getCidr(maskInt);
-        let maskDecimal = intToIp(maskInt);
-        let wildcard = intToIp(~maskInt >>> 0);
-        let totalHosts = broadcastInt - networkInt + 1;
-        let usableHosts = totalHosts === 1 ? 1 : (totalHosts === 2 ? 2 : totalHosts - 2);
-        
-        let firstUsable = networkInt + 1;
-        let lastUsable = broadcastInt - 1;
-        
-        document.getElementById('networkAddr').innerText = intToIp(networkInt);
-        document.getElementById('broadcastAddr').innerText = intToIp(broadcastInt);
-        document.getElementById('firstUsable').innerText = firstUsable > broadcastInt ? 'N/A' : intToIp(firstUsable);
-        document.getElementById('lastUsable').innerText = lastUsable < networkInt ? 'N/A' : intToIp(lastUsable);
-        document.getElementById('maskDecimal').innerText = maskDecimal;
-        document.getElementById('cidrValue').innerText = '/' + cidr;
-        document.getElementById('totalHosts').innerText = totalHosts.toLocaleString();
-        document.getElementById('usableHosts').innerText = usableHosts.toLocaleString();
-        
-        if (firstUsable > broadcastInt) {
-            document.getElementById('ipRange').innerHTML = 'Chỉ có 1 địa chỉ (điểm-điểm)';
+        // Parse mask
+        var maskInt;
+        if (maskInput.includes('.')) {
+            if (!isValidIp(maskInput)) {
+                resultsDiv.innerHTML = '<div style="background:rgba(255,0,0,0.2); padding:15px; border-radius:10px;">❌ Subnet mask không hợp lệ!</div>';
+                return;
+            }
+            maskInt = ipToInt(maskInput);
+            if (!isValidMask(maskInt)) {
+                resultsDiv.innerHTML = '<div style="background:rgba(255,0,0,0.2); padding:15px; border-radius:10px;">❌ Subnet mask không liên tục!</div>';
+                return;
+            }
         } else {
-            document.getElementById('ipRange').innerHTML = `${intToIp(firstUsable)} → ${intToIp(lastUsable)}`;
+            var cidr = parseInt(maskInput);
+            if (isNaN(cidr) || cidr < 0 || cidr > 32) {
+                resultsDiv.innerHTML = '<div style="background:rgba(255,0,0,0.2); padding:15px; border-radius:10px;">❌ CIDR phải từ 0 đến 32!</div>';
+                return;
+            }
+            maskInt = cidrToMask(cidr);
         }
+
+        var ipInt = ipToInt(ip);
+        var networkInt = ipInt & maskInt;
+        var broadcastInt = networkInt | (~maskInt >>> 0);
+        var cidrValue = maskToCidr(maskInt);
+        var maskDecimal = intToIp(maskInt);
+        var wildcard = intToIp(~maskInt >>> 0);
+        var totalHosts = broadcastInt - networkInt + 1;
+        var usableHosts = totalHosts - 2;
+        if (cidrValue === 31) usableHosts = 2;
+        if (cidrValue === 32) usableHosts = 1;
         
-        document.getElementById('binaryIp').innerHTML = toBinary(ip);
-        document.getElementById('binaryMask').innerHTML = toBinary(maskDecimal);
-        document.getElementById('binaryWildcard').innerHTML = toBinary(wildcard);
+        var firstUsable = networkInt + 1;
+        var lastUsable = broadcastInt - 1;
+
+        // Tạo HTML kết quả
+        var html = '<hr>';
+        html += '<div class="result-grid">';
+        html += '<div class="result-item"><div class="result-label">🌐 Địa chỉ mạng (Network)</div><div class="result-value">' + intToIp(networkInt) + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">📢 Địa chỉ Broadcast</div><div class="result-value">' + intToIp(broadcastInt) + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">🎯 IP đầu tiên (First usable)</div><div class="result-value">' + (cidrValue >= 31 ? 'N/A' : intToIp(firstUsable)) + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">🏁 IP cuối cùng (Last usable)</div><div class="result-value">' + (cidrValue >= 31 ? 'N/A' : intToIp(lastUsable)) + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">🔢 Subnet Mask</div><div class="result-value">' + maskDecimal + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">📏 CIDR</div><div class="result-value">/' + cidrValue + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">🔀 Wildcard Mask</div><div class="result-value">' + wildcard + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">💻 Tổng số địa chỉ</div><div class="result-value">' + totalHosts.toLocaleString() + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">✅ Số host khả dụng</div><div class="result-value">' + usableHosts.toLocaleString() + '</div></div>';
+        html += '</div>';
         
-        document.getElementById('results').style.display = 'block';
-        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        html += '<div class="result-item"><div class="result-label">📋 Dải IP khả dụng</div><div class="result-value">';
+        if (cidrValue === 32) {
+            html += 'Chỉ có 1 địa chỉ (điểm-điểm)';
+        } else if (cidrValue === 31) {
+            html += intToIp(networkInt) + ' → ' + intToIp(broadcastInt);
+        } else {
+            html += intToIp(firstUsable) + ' → ' + intToIp(lastUsable);
+        }
+        html += '</div></div>';
+        
+        html += '<div class="result-item"><div class="result-label">💻 Binary - IP</div><div class="binary">' + toBinaryIp(ip) + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">💻 Binary - Subnet Mask</div><div class="binary">' + toBinaryIp(maskDecimal) + '</div></div>';
+        html += '<div class="result-item"><div class="result-label">💻 Binary - Wildcard</div><div class="binary">' + toBinaryIp(wildcard) + '</div></div>';
+
+        resultsDiv.innerHTML = html;
+        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // Event listeners
+    // Gán sự kiện
     document.getElementById('calculateBtn').addEventListener('click', calculate);
     
-    document.getElementById('ipAddress').addEventListener('keypress', (e) => {
+    document.getElementById('ipAddress').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') calculate();
     });
-    document.getElementById('subnetMask').addEventListener('keypress', (e) => {
+    document.getElementById('subnetMask').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') calculate();
     });
     
-    document.querySelectorAll('.cidr-badge').forEach(badge => {
-        badge.addEventListener('click', () => {
-            let cidr = badge.dataset.cidr;
+    // CIDR badges
+    var badges = document.querySelectorAll('.cidr-badge');
+    for (var i = 0; i < badges.length; i++) {
+        badges[i].addEventListener('click', function() {
+            var cidr = this.getAttribute('data-cidr');
             document.getElementById('subnetMask').value = cidr;
             calculate();
         });
-    });
+    }
     
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            let ip = btn.dataset.ip;
-            let mask = btn.dataset.mask;
+    // Preset buttons
+    var presets = document.querySelectorAll('.preset-btn');
+    for (var i = 0; i < presets.length; i++) {
+        presets[i].addEventListener('click', function() {
+            var ip = this.getAttribute('data-ip');
+            var mask = this.getAttribute('data-mask');
             document.getElementById('ipAddress').value = ip;
             document.getElementById('subnetMask').value = mask;
             calculate();
         });
-    });
+    }
 
-    // Tính ngay khi load trang
-    window.addEventListener('load', () => {
-        calculate();
-    });
+    // Tự động tính khi load
+    calculate();
 </script>
 </body>
 </html>
