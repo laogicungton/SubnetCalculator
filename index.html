@@ -139,7 +139,7 @@
         }
         .binary {
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11px;
             opacity: 0.6;
             word-break: break-all;
         }
@@ -271,11 +271,6 @@
                 <div class="result-label">💻 Binary - Wildcard Mask</div>
                 <div class="binary" id="binaryWildcard"></div>
             </div>
-
-            <div class="result-item" id="subnetInfo" style="display:none;">
-                <div class="result-label">📊 Thông tin subnet</div>
-                <div class="result-value" id="subnetDetails"></div>
-            </div>
         </div>
     </div>
 
@@ -291,101 +286,36 @@
 </div>
 
 <script>
-    class SubnetCalculator {
-        constructor(ip, mask) {
-            this.ip = ip;
-            this.mask = mask;
-            this.ipInt = this.ipToInt(ip);
-            this.maskInt = this.parseMask(mask);
-            this.networkInt = this.ipInt & this.maskInt;
-            this.broadcastInt = this.networkInt | (~this.maskInt >>> 0);
-        }
+    function ipToInt(ip) {
+        return ip.split('.').reduce((int, octet) => (int << 8) + parseInt(octet, 10), 0) >>> 0;
+    }
 
-        ipToInt(ip) {
-            return ip.split('.').reduce((int, octet) => (int << 8) + parseInt(octet, 10), 0) >>> 0;
-        }
+    function intToIp(int) {
+        return [
+            (int >>> 24) & 255,
+            (int >>> 16) & 255,
+            (int >>> 8) & 255,
+            int & 255
+        ].join('.');
+    }
 
-        intToIp(int) {
-            return [
-                (int >>> 24) & 255,
-                (int >>> 16) & 255,
-                (int >>> 8) & 255,
-                int & 255
-            ].join('.');
+    function parseMask(mask) {
+        if (mask.includes('.')) {
+            return ipToInt(mask);
+        } else {
+            let cidr = parseInt(mask);
+            return (~0 >>> (32 - cidr)) >>> 0;
         }
+    }
 
-        parseMask(mask) {
-            if (mask.includes('.')) {
-                return this.ipToInt(mask);
-            } else {
-                let cidr = parseInt(mask);
-                return (~0 >>> (32 - cidr)) >>> 0;
-            }
-        }
+    function getCidr(maskInt) {
+        return 32 - Math.clz32(~maskInt >>> 0);
+    }
 
-        getCidr() {
-            return 32 - Math.clz32(~this.maskInt >>> 0);
-        }
-
-        getMaskDecimal() {
-            return this.intToIp(this.maskInt);
-        }
-
-        getWildcard() {
-            return this.intToIp(~this.maskInt >>> 0);
-        }
-
-        getNetwork() {
-            return this.intToIp(this.networkInt);
-        }
-
-        getBroadcast() {
-            return this.intToIp(this.broadcastInt);
-        }
-
-        getFirstUsable() {
-            if (this.broadcastInt - this.networkInt === 0) return 'N/A';
-            return this.intToIp(this.networkInt + 1);
-        }
-
-        getLastUsable() {
-            if (this.broadcastInt - this.networkInt === 0) return 'N/A';
-            return this.intToIp(this.broadcastInt - 1);
-        }
-
-        getTotalHosts() {
-            return this.broadcastInt - this.networkInt + 1;
-        }
-
-        getUsableHosts() {
-            let total = this.getTotalHosts();
-            if (total === 1) return 1;
-            if (total === 2) return 2;
-            return total - 2;
-        }
-
-        getIpRange() {
-            let first = this.getFirstUsable();
-            let last = this.getLastUsable();
-            if (first === 'N/A') return 'Chỉ có 1 địa chỉ (điểm-điểm)';
-            return `${first} → ${last}`;
-        }
-
-        toBinary(ip) {
-            return ip.split('.').map(octet => 
-                parseInt(octet).toString(2).padStart(8, '0')
-            ).join('.');
-        }
-
-        getSubnetInfo() {
-            let cidr = this.getCidr();
-            let info = [];
-            if (cidr <= 8) info.push(`/8 → Mạng lớp A, ${this.getUsableHosts()} host`);
-            else if (cidr <= 16) info.push(`/16 → Mạng lớp B, ${this.getUsableHosts()} host`);
-            else if (cidr <= 24) info.push(`/24 → Mạng lớp C, ${this.getUsableHosts()} host`);
-            else info.push(`/24+ → Subnet nhỏ, ${this.getUsableHosts()} host`);
-            return info.join(', ');
-        }
+    function toBinary(ip) {
+        return ip.split('.').map(octet => 
+            parseInt(octet).toString(2).padStart(8, '0')
+        ).join('.');
     }
 
     function validateIP(ip) {
@@ -397,18 +327,7 @@
         });
     }
 
-    function parseMaskInput(mask) {
-        if (mask.includes('.')) {
-            if (validateIP(mask)) return mask;
-            throw new Error('Subnet mask không hợp lệ');
-        } else {
-            let cidr = parseInt(mask);
-            if (cidr >= 0 && cidr <= 32) return cidr;
-            throw new Error('CIDR phải từ 0 đến 32');
-        }
-    }
-
-    function displayResults() {
+    function calculate() {
         let ip = document.getElementById('ipAddress').value.trim();
         let maskInput = document.getElementById('subnetMask').value.trim();
 
@@ -417,80 +336,80 @@
             return;
         }
 
-        let parsedMask;
+        let maskInt;
         try {
-            parsedMask = parseMaskInput(maskInput);
-        } catch (e) {
-            alert(`❌ ${e.message}`);
+            maskInt = parseMask(maskInput);
+        } catch(e) {
+            alert('❌ Subnet mask không hợp lệ!');
             return;
         }
 
-        try {
-            let calc = new SubnetCalculator(ip, parsedMask);
-            
-            document.getElementById('networkAddr').innerText = calc.getNetwork();
-            document.getElementById('broadcastAddr').innerText = calc.getBroadcast();
-            document.getElementById('firstUsable').innerText = calc.getFirstUsable();
-            document.getElementById('lastUsable').innerText = calc.getLastUsable();
-            document.getElementById('maskDecimal').innerText = calc.getMaskDecimal();
-            document.getElementById('cidrValue').innerText = `/${calc.getCidr()}`;
-            document.getElementById('totalHosts').innerText = calc.getTotalHosts().toLocaleString();
-            document.getElementById('usableHosts').innerText = calc.getUsableHosts().toLocaleString();
-            document.getElementById('ipRange').innerHTML = calc.getIpRange();
-            document.getElementById('binaryIp').innerHTML = calc.toBinary(ip);
-            document.getElementById('binaryMask').innerHTML = calc.toBinary(calc.getMaskDecimal());
-            document.getElementById('binaryWildcard').innerHTML = calc.toBinary(calc.getWildcard());
-            
-            let subnetInfo = calc.getSubnetInfo();
-            if (subnetInfo) {
-                document.getElementById('subnetDetails').innerHTML = subnetInfo;
-                document.getElementById('subnetInfo').style.display = 'block';
-            }
-            
-            document.getElementById('results').style.display = 'block';
-            
-            // Scroll nhẹ xuống kết quả
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-        } catch (e) {
-            alert(`Lỗi: ${e.message}`);
+        let ipInt = ipToInt(ip);
+        let networkInt = ipInt & maskInt;
+        let broadcastInt = networkInt | (~maskInt >>> 0);
+        let cidr = getCidr(maskInt);
+        let maskDecimal = intToIp(maskInt);
+        let wildcard = intToIp(~maskInt >>> 0);
+        let totalHosts = broadcastInt - networkInt + 1;
+        let usableHosts = totalHosts === 1 ? 1 : (totalHosts === 2 ? 2 : totalHosts - 2);
+        
+        let firstUsable = networkInt + 1;
+        let lastUsable = broadcastInt - 1;
+        
+        document.getElementById('networkAddr').innerText = intToIp(networkInt);
+        document.getElementById('broadcastAddr').innerText = intToIp(broadcastInt);
+        document.getElementById('firstUsable').innerText = firstUsable > broadcastInt ? 'N/A' : intToIp(firstUsable);
+        document.getElementById('lastUsable').innerText = lastUsable < networkInt ? 'N/A' : intToIp(lastUsable);
+        document.getElementById('maskDecimal').innerText = maskDecimal;
+        document.getElementById('cidrValue').innerText = '/' + cidr;
+        document.getElementById('totalHosts').innerText = totalHosts.toLocaleString();
+        document.getElementById('usableHosts').innerText = usableHosts.toLocaleString();
+        
+        if (firstUsable > broadcastInt) {
+            document.getElementById('ipRange').innerHTML = 'Chỉ có 1 địa chỉ (điểm-điểm)';
+        } else {
+            document.getElementById('ipRange').innerHTML = `${intToIp(firstUsable)} → ${intToIp(lastUsable)}`;
         }
+        
+        document.getElementById('binaryIp').innerHTML = toBinary(ip);
+        document.getElementById('binaryMask').innerHTML = toBinary(maskDecimal);
+        document.getElementById('binaryWildcard').innerHTML = toBinary(wildcard);
+        
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // Event listeners
-    document.getElementById('calculateBtn').addEventListener('click', displayResults);
+    document.getElementById('calculateBtn').addEventListener('click', calculate);
     
-    // Enter key
     document.getElementById('ipAddress').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') displayResults();
+        if (e.key === 'Enter') calculate();
     });
     document.getElementById('subnetMask').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') displayResults();
+        if (e.key === 'Enter') calculate();
     });
     
-    // CIDR badges
     document.querySelectorAll('.cidr-badge').forEach(badge => {
         badge.addEventListener('click', () => {
             let cidr = badge.dataset.cidr;
             document.getElementById('subnetMask').value = cidr;
-            displayResults();
+            calculate();
         });
     });
     
-    // Preset buttons
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             let ip = btn.dataset.ip;
             let mask = btn.dataset.mask;
             document.getElementById('ipAddress').value = ip;
             document.getElementById('subnetMask').value = mask;
-            displayResults();
+            calculate();
         });
     });
 
-    // Tính ngay lần đầu khi load trang
+    // Tính ngay khi load trang
     window.addEventListener('load', () => {
-        displayResults();
+        calculate();
     });
 </script>
 </body>
